@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yumzy Beta</title>
+  <style>
+    * { 
+      box-sizing: border-box; 
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      font-family: Arial, sans-serif;
+      background-color: #000;
+      color: #fff;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Simple starfield */
+    .stars {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+    }
+
+    .star {
+      position: absolute;
+      background-color: #fff;
+      border-radius: 50%;
+      animation: twinkle 5s infinite ease-in-out;
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 1; }
+    }
+
+    header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 15px;
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #fff;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    #credits-btn {
+      position: absolute;
+      left: 15px;
+      background: transparent;
+      border: 1px solid #fff;
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
+    #chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 15px;
+      overflow: hidden;
+      max-width: 700px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    #chat {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      scroll-behavior: smooth;
+    }
+
+    .msg {
+      max-width: 80%;
+      padding: 12px 15px;
+      border-radius: 15px;
+      line-height: 1.4;
+      animation: fadeIn 0.3s ease;
+      word-wrap: break-word;
+      font-size: 0.95rem;
+    }
+
+    .user {
+      align-self: flex-end;
+      background: #fff;
+      color: #000;
+    }
+
+    .ai {
+      align-self: flex-start;
+      background: #333;
+      color: #fff;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .input-area {
+      display: flex;
+      padding: 15px;
+      background: #111;
+      border-radius: 8px;
+      margin-top: 10px;
+      flex-shrink: 0;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      background: #222;
+      color: #fff;
+      font-size: 1em;
+      outline: none;
+      font-family: Arial, sans-serif;
+    }
+
+    button {
+      background: #fff;
+      color: #000;
+      border: none;
+      border-radius: 6px;
+      padding: 0 18px;
+      margin-left: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-family: Arial, sans-serif;
+    }
+
+    button:hover {
+      background: #e0e0e0;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 11px;
+      color: #888;
+      padding: 8px;
+      flex-shrink: 0;
+    }
+
+    /* Credits Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.7);
+      z-index: 100;
+    }
+
+    .modal-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #111;
+      padding: 20px;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 300px;
+      text-align: center;
+    }
+
+    .modal h2 {
+      color: #fff;
+      margin-bottom: 15px;
+      font-size: 1.5rem;
+    }
+
+    .modal p {
+      margin: 10px 0;
+      line-height: 1.5;
+    }
+
+    .modal .close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="stars" id="stars"></div>
+  
+  <header>
+    <button id="credits-btn">Credits</button>
+    Yumzy Beta
+  </header>
+  
+  <div id="chat-container">
+    <div id="chat"></div>
+    <div class="input-area">
+      <input type="text" id="userInput" placeholder="Ask me about food, recipes, or cooking..." />
+      <button id="sendBtn">Send</button>
+    </div>
+  </div>
+  
+  <footer>Made by Benjamin, Jasper, and Zaiden</footer>
+
+  <!-- Credits Modal -->
+  <div class="modal" id="creditsModal">
+    <div class="modal-content">
+      <button class="close" id="closeModal">&times;</button>
+      <h2>Credits</h2>
+      <p>Coded by Ben</p>
+    </div>
+  </div>
+
+  <script>
+    // Create simple starfield
+    function createStars() {
+      const starsContainer = document.getElementById('stars');
+      const starCount = 100;
+      
+      for (let i = 0; i < starCount; i++) {
+        const star = document.createElement('div');
+        star.classList.add('star');
+        
+        const x = Math.random() * 100;
+        const y = Math.random() * 100;
+        const size = Math.random() * 2 + 1;
+        const delay = Math.random() * 5;
+        
+        star.style.left = `${x}%`;
+        star.style.top = `${y}%`;
+        star.style.width = `${size}px`;
+        star.style.height = `${size}px`;
+        star.style.animationDelay = `${delay}s`;
+        
+        starsContainer.appendChild(star);
+      }
+    }
+    
+    // Modal functionality
+    const creditsModal = document.getElementById('creditsModal');
+    const creditsBtn = document.getElementById('credits-btn');
+    const closeModal = document.getElementById('closeModal');
+    
+    creditsBtn.addEventListener('click', () => {
+      creditsModal.style.display = 'block';
+    });
+    
+    closeModal.addEventListener('click', () => {
+      creditsModal.style.display = 'none';
+    });
+    
+    window.addEventListener('click', (e) => {
+      if (e.target === creditsModal) {
+        creditsModal.style.display = 'none';
+      }
+    });
+
+    // Yumzy functionality
+    const GEMINI_API_KEY = "AIzaSyDrgHDm5zCzwqpaV94nNlorF_QzzJPKUWA";
+    const GEMINI_MODEL = "gemini-2.0-flash";
+    const basePrompt = `
+You are Yumzy, a friendly food helper. You give simple answers about food, recipes, and cooking.
+
+Keep your answers short and simple. Only give long answers when someone asks for a recipe.
+
+When someone asks for a recipe, give them:
+- A list of what they need
+- Simple steps to make it
+- How long it takes
+- How many people it feeds
+
+For other questions, just give a short, helpful answer.
+
+You know about:
+- Recipes for all kinds of food
+- Cooking tips
+- Meal ideas
+- Food facts
+- Kitchen tools
+- Food swaps for allergies
+- Different types of food from around the world
+- Baking
+
+Be friendly and helpful. Use simple words.
+`;
+
+    const chat = document.getElementById("chat");
+    const userInput = document.getElementById("userInput");
+    const sendBtn = document.getElementById("sendBtn");
+
+    // Create stars on load
+    window.addEventListener('DOMContentLoaded', () => {
+      createStars();
+    });
+
+    function addMessage(text, sender) {
+      const msg = document.createElement("div");
+      msg.className = `msg ${sender}`;
+      msg.textContent = text;
+      chat.appendChild(msg);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text) return;
+      addMessage(text, "user");
+      userInput.value = "";
+      userInput.disabled = true;
+      sendBtn.disabled = true;
+
+      const prompt = `${basePrompt}\nUser: ${text}\nAI:`;
+      addMessage("...", "ai");
+      const loadingMsg = chat.lastElementChild;
+
+      try {
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contents: [{ role: "user", parts: [{ text: prompt }] }],
+            }),
+          }
+        );
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error?.message || "API Error");
+
+        const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response.";
+        loadingMsg.remove();
+        typeMessage(reply, "ai");
+      } catch (err) {
+        loadingMsg.remove();
+        addMessage("Sorry, having trouble right now. Try again.", "ai");
+      } finally {
+        userInput.disabled = false;
+        sendBtn.disabled = false;
+        userInput.focus();
+      }
+    }
+
+    function typeMessage(text, sender) {
+      const msg = document.createElement("div");
+      msg.className = `msg ${sender}`;
+      chat.appendChild(msg);
+      let i = 0;
+      const typing = setInterval(() => {
+        msg.textContent = text.slice(0, i++);
+        chat.scrollTop = chat.scrollHeight;
+        if (i > text.length) clearInterval(typing);
+      }, 15);
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+    userInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+  </script>
+</body>
+</html>
