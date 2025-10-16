@@ -69,6 +69,18 @@
       cursor: pointer;
     }
 
+    #settings-btn {
+      position: absolute;
+      right: 15px;
+      background: transparent;
+      border: 1px solid #fff;
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+
     #chat-container {
       flex: 1;
       display: flex;
@@ -208,6 +220,68 @@
       font-size: 1.2rem;
       cursor: pointer;
     }
+
+    /* Settings Styles */
+    .setting-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 15px 0;
+      padding: 10px 0;
+      border-bottom: 1px solid #333;
+    }
+
+    .setting-label {
+      flex: 1;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    /* Toggle Switch - Fixed to always use default color */
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 24px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #333;
+      transition: .4s;
+      border-radius: 24px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 16px;
+      width: 16px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #333; /* Changed from #fff to #333 to keep default color */
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
   </style>
 </head>
 <body>
@@ -216,6 +290,7 @@
   <header>
     <button id="credits-btn">Credits</button>
     Yumzy Beta
+    <button id="settings-btn">Settings</button>
   </header>
   
   <div id="chat-container">
@@ -226,14 +301,30 @@
     </div>
   </div>
   
-  <footer>Made by Benjamin, Jasper, and Zaiden</footer>
+  <footer>Made by Benjamin, Jasper, and Zayden.</footer>
 
   <!-- Credits Modal -->
   <div class="modal" id="creditsModal">
     <div class="modal-content">
       <button class="close" id="closeModal">&times;</button>
       <h2>Credits</h2>
-      <p>Coded by Ben</p>
+      <p>Coded by Ben.  Project by Benjamin, Jasper, and Zayden.</p>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal" id="settingsModal">
+    <div class="modal-content">
+      <button class="close" id="closeSettingsModal">&times;</button>
+      <h2>Settings</h2>
+      
+      <div class="setting-item">
+        <span class="setting-label">Advanced responses</span>
+        <label class="switch">
+          <input type="checkbox" id="advancedResponses">
+          <span class="slider"></span>
+        </label>
+      </div>
     </div>
   </div>
 
@@ -267,23 +358,47 @@
     const creditsBtn = document.getElementById('credits-btn');
     const closeModal = document.getElementById('closeModal');
     
+    const settingsModal = document.getElementById('settingsModal');
+    const settingsBtn = document.getElementById('settings-btn');
+    const closeSettingsModal = document.getElementById('closeSettingsModal');
+    
     creditsBtn.addEventListener('click', () => {
       creditsModal.style.display = 'block';
+    });
+    
+    settingsBtn.addEventListener('click', () => {
+      settingsModal.style.display = 'block';
     });
     
     closeModal.addEventListener('click', () => {
       creditsModal.style.display = 'none';
     });
     
+    closeSettingsModal.addEventListener('click', () => {
+      settingsModal.style.display = 'none';
+    });
+    
     window.addEventListener('click', (e) => {
       if (e.target === creditsModal) {
         creditsModal.style.display = 'none';
       }
+      if (e.target === settingsModal) {
+        settingsModal.style.display = 'none';
+      }
+    });
+
+    // Settings state
+    let advancedResponses = false;
+    const advancedResponsesToggle = document.getElementById('advancedResponses');
+    
+    advancedResponsesToggle.addEventListener('change', function() {
+      advancedResponses = this.checked;
     });
 
     // Yumzy functionality
     const GEMINI_API_KEY = "AIzaSyDrgHDm5zCzwqpaV94nNlorF_QzzJPKUWA";
     const GEMINI_MODEL = "gemini-2.0-flash";
+    
     const basePrompt = `
 You are Yumzy, a friendly food helper. You give simple answers about food, recipes, and cooking.
 
@@ -308,6 +423,42 @@ You know about:
 - Baking
 
 Be friendly and helpful. Use simple words.
+`;
+
+    const advancedPrompt = `
+You are Yumzy, an exceptionally detailed and knowledgeable food expert. You provide comprehensive, in-depth responses about food, recipes, and cooking.
+
+Always give extensive, thorough answers with rich detail, nuance, and expert insights.
+
+When someone asks for a recipe, provide an exhaustive response including:
+- Detailed ingredient lists with measurements and potential substitutions
+- Comprehensive step-by-step instructions with cooking techniques explained
+- Precise timing for each stage of preparation and cooking
+- Exact serving sizes with portion guidance
+- Equipment recommendations
+- Flavor profiles and pairing suggestions
+- Nutritional information when relevant
+- Troubleshooting tips and common mistakes to avoid
+- Variations and customization options
+
+For all other food-related questions, provide:
+- Deep contextual background information
+- Scientific explanations of cooking processes
+- Historical and cultural context where relevant
+- Multiple perspectives or approaches when applicable
+- Detailed practical applications and real-world examples
+
+You are an authority on:
+- Global culinary traditions and techniques
+- Food science and chemistry
+- Advanced cooking methodologies
+- Ingredient provenance and quality assessment
+- Professional kitchen practices
+- Dietary adaptations and specialized nutrition
+- Food history and cultural significance
+- Contemporary food trends and innovations
+
+Maintain an engaging, enthusiastic tone while delivering exceptionally detailed, comprehensive information that demonstrates deep expertise in all culinary matters.
 `;
 
     const chat = document.getElementById("chat");
@@ -335,7 +486,8 @@ Be friendly and helpful. Use simple words.
       userInput.disabled = true;
       sendBtn.disabled = true;
 
-      const prompt = `${basePrompt}\nUser: ${text}\nAI:`;
+      const currentPrompt = advancedResponses ? advancedPrompt : basePrompt;
+      const prompt = `${currentPrompt}\nUser: ${text}\nAI:`;
       addMessage("...", "ai");
       const loadingMsg = chat.lastElementChild;
 
